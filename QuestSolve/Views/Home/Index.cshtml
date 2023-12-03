@@ -1,0 +1,152 @@
+@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - QuestSolve</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">QuestSolve</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto"></ul>
+        <div class="navbar-text d-flex align-items-center">
+            @if (User.Identity.IsAuthenticated)
+            {
+                <span>Hello, @User.Identity.Name!</span>
+                <!-- Logout Button -->
+                <form action="/User/Logout" method="post" class="ml-5">
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            }
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col">
+            <form asp-action="Index" method="get" class="form-inline mb-3">
+                <input type="text" name="searchQuery" class="form-control mr-2" style="width: 80%;" placeholder="Search questions">
+                <button type="submit" style="width: 9%" class="btn btn-success my-2 mr-2">Search</button>
+                <form asp-action="Index" method="get" class="form-inline mr-2">
+                    <button type="submit" style="width: 9%" class="btn btn-outline-success my-2 my-2 text-end">Reset</button>
+                </form>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Latest Questions</h2>
+        <a href="/Question/Create" class="btn btn-primary">Ask Question</a>
+    </div>
+   @if (Model.Count > 0) 
+{
+    @foreach (var question in Model)
+    {
+        <div class="card mb-2">
+            <div class="card-body">
+                <h5 class="card-title">@question.Title</h5>
+                <p class="card-text">@question.Content</p>
+                @if (!string.IsNullOrEmpty(question.ImageUrl))
+                {
+                    <img src="@Url.Content(question.ImageUrl)" alt="Question Image" class="img-fluid mb-2">
+                }
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-secondary" onclick="toggleComments('@question.QuestionId')">Show Comments</button>
+                    <div>
+                        @if (User.Identity.IsAuthenticated && User.FindFirst(ClaimTypes.NameIdentifier)?.Value == question.PostedByUserId.ToString())
+                        {
+                            <a href="/Question/Delete/@question.QuestionId" class="btn btn-danger">Delete</a>
+                        }
+                        <button class="btn btn-info" onclick="showResponseForm('@question.QuestionId')">Respond</button>
+                    </div>
+                </div>
+                <div id="responseForm-@question.QuestionId" class="mt-2" style="display:none;">
+                    <form action="/Question/AddResponse" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="QuestionId" value="@question.QuestionId"/>
+                        <div class="form-group">
+                            <textarea class="form-control" name="Content" required placeholder="Write your response here..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Image (optional)</label>
+                            <input type="file" class="form-control" name="Image" accept="image/*"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Response</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="comments-@question.QuestionId" class="mt-2" style="display:none;">
+                @foreach (var response in question.Responses)
+                {
+                    <div class="comment mb-2 p-2">
+                        <hr/>
+                        <p><strong>@response.RespondedBy.Username</strong> wrote:</p>
+                        <p>@response.Content</p>
+                        @if (!string.IsNullOrEmpty(response.ImageUrl))
+                        {
+                            <img src="@Url.Content(response.ImageUrl)" alt="Response Image" class="img-fluid mb-2">
+                        }
+                        <small class="text-muted">@response.ResponseDate.ToString("dd MMM yyyy")</small>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+
+    <div class="row justify-content-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, searchQuery = ViewBag.SearchQuery })">Previous</a>
+                </li>
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = i, searchQuery = ViewBag.SearchQuery })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, searchQuery = ViewBag.SearchQuery })">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+   else
+   {
+       {
+           <div class="text-center">
+               <p>No results found.</p>
+           </div>
+       }
+   }
+</div>
+}
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script>
+   function showResponseForm(questionId) {
+       const form = document.getElementById('responseForm-' + questionId);
+       form.style.display = form.style.display === 'none' ? 'block' : 'none';
+   }
+   function toggleComments(questionId) {
+       const commentsDiv = document.getElementById('comments-' + questionId);
+       commentsDiv.style.display = commentsDiv.style.display === 'none' ? 'block' : 'none';
+   }
+</script>
+</body>
+</html>

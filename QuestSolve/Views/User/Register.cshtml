@@ -1,0 +1,45 @@
+@model QuestSolve.dtos.UserRegistrationDTO
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - QuestSolve</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="mb-4">Register</h2>
+            <form asp-action="Register" method="post" class="card card-body">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label for="Username">Username</label>
+                    <input asp-for="Username" name="Username" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="Email">Email</label>
+                    <input asp-for="Email" name="Email" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="Password">Password</label>
+                    <input asp-for="Password" name="Password" type="password" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+            </form>
+            <div class="text-center mt-3">
+                <p>Already have an account?</p>
+                <p><a href="/User/Login" class="btn btn-link">Login</a></p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
